@@ -1,0 +1,160 @@
+---
+title: "NSTL Growth for Publication"
+author: "Isaac VanDiest"
+date: "2025-01-22"
+output: html_document
+---
+
+#Load Packages
+```{r}
+library(Rmisc) 
+library(ggplot2)
+library(tidyverse)
+library(car)
+library(lme4)
+library(lmerTest)
+library(vegan)
+library(lubridate)
+library(nlme)
+library(glmm)
+library(dplyr)
+library(predictmeans)
+library(lsmeans)
+library(gridExtra)
+library(effects)
+library(emmeans)
+library(broom)
+library(modelr)
+library(performance)
+library(ggpubr)
+library(see)
+library(stats)
+library(reshape2)
+```
+
+#Dataframe Assembly
+```{r}
+nestling<-read.csv("sosp development.csv")
+
+#Remove Rural nestlings w/ cowbirds from dataset
+nestling2<-nestling%>%
+  filter(bhco.hab!="rural.yes")
+
+#Remove Day 11 nestlings from dataset due to lack of rural comparisons
+sub11n<-dplyr::filter(nestling2, as.numeric(Day) < 11)
+```
+
+#Number of Unique Nestlings and Nests
+```{r}
+##calculate number of unique nestlings and nests##
+#Rural NP
+nestling3<-nestling2%>%
+  filter(bhco.hab=="rural.no")
+
+unique(nestling3$nestlingID) #89
+unique(nestling3$NID) #32
+
+#Urban NP
+nestling4<-nestling2%>%
+  filter(bhco.hab=="urban.no")
+
+unique(nestling4$nestlingID) #183
+unique(nestling4$NID) #61
+
+#Urban P
+nestling5<-nestling2%>%
+  filter(bhco.hab=="urban.yes")
+
+unique(nestling5$nestlingID) #78
+unique(nestling5$NID) #35
+
+#Number of nestlings sampled at each age
+table(nestling2$Day)
+
+#number of unique nestlings sampled multiple times and included in this analysis (rural parasitized dropped)
+unique(nestling2$nestlingID)
+
+```
+
+#Growth Models
+```{r}
+##Mass with only nestlings <11##
+gmasstest11<-lmer(Mass~bhco.hab*Day+(1|NID)+(1|NID:nestlingID), data=sub11n)
+summary(gmasstest11)
+
+##WC with only nestlings <11##
+gwc11<-lmer(Wingchord.average~bhco.hab*Day+(1|NID)+(1|NID:nestlingID), data=sub11n)
+summary(gwc11)
+
+##Pin Feather Length with only nestlings <11##
+gpin11<-lmer(feather.once.broken~bhco.hab*Day+(1|NID:nestlingID), data=sub11n)
+summary(gpin11)
+
+##Tarsus with only nestlings <11##
+sub11n<-melt(sub11n, id.vars = c("nestlingID","bhco.hab","Day","NID"),
+                 measure.vars = c("Tarsus.1","Tarsus.2","Tarsus.3"))
+
+#Change 'value' (tarsus length) to numeric
+sub11n$value<-as.numeric(sub11n$value)
+
+gtarsus11<-lmer(value~bhco.hab*Day+(1|NID)+(1|NID:nestlingID), data=sub11n)
+summary(gtarsus11)
+
+#reset df for figs
+sub11n<-dplyr::filter(nestling2, as.numeric(Day) < 11)
+```
+
+#Figures
+```{r}
+a4<-ggplot(data=sub11n, aes(x=Day, y=Mass, color=bhco.hab))+
+  geom_point(size=2)+
+  theme_classic()+
+  geom_smooth(linewidth=1.5)+
+  labs(x= "Nestling Age", y= "Body Mass (g)",fill = "Nestling Group")+
+  theme(legend.position = "none")+
+  scale_x_continuous(breaks = seq(0, 10, by = 2))+
+  theme(axis.title.x = element_text(size = 16), axis.title.y= element_text(size=16),text = element_text(size = 16))+
+  scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
+a4
+
+############################################
+
+b3<-ggplot(data=sub11n, aes(x=Day, y=Tarsus.Average, color=bhco.hab))+
+ geom_point(size=2)+
+  theme_classic()+
+  geom_smooth(linewidth=1.5)+
+  labs(x= "Nestling Age", y= "Tarsus Length (mm)",fill = "Nestling Group")+
+  theme(legend.position = "none")+
+  scale_x_continuous(breaks = seq(0, 10, by = 2))+
+  theme(axis.title.x = element_text(size = 16), axis.title.y= element_text(size=16),text = element_text(size = 16))+
+  scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
+b3
+
+c3<-ggplot(data=sub11n, aes(x=Day, y=Wingchord.average, color=bhco.hab))+
+ geom_point(size=2)+
+  theme_classic()+
+  geom_smooth(linewidth=1.5)+
+    labs(x= "Nestling Age", y= "Wing chord (mm)",fill = "Nestling Group")+
+    theme(legend.position = "none")+
+    scale_x_continuous(breaks = seq(0, 10, by = 2))+
+    theme(axis.title.x = element_text(size = 16), axis.title.y= element_text(size=16),text = element_text(size = 16))+
+  scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
+c3
+
+d3<-ggplot(data=sub11n, aes(x=Day, y=total.pin, color=bhco.hab))+
+ geom_point(size=2)+
+  theme_classic()+
+  geom_smooth(linewidth=1.5)+
+    labs(x= "Nestling Age", y= "Pin Feather Length (mm)",fill = "Nestling Group")+
+    theme(legend.position = "none")+
+    scale_x_continuous(breaks = seq(0, 10, by = 2))+
+   theme(axis.title.x = element_text(size = 16), axis.title.y= element_text(size=16),text = element_text(size = 16))+
+  scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
+d3
+
+#Fig 1
+ggarrange(a4,b3)
+#Fig A1
+ggarrange(c3,d3)
+```
+
