@@ -1,0 +1,234 @@
+---
+title: "NSTL Amino Acids for Publication"
+author: "Isaac VanDiest"
+date: "2025-01-23"
+output: html_document
+---
+
+#Load Packages & Dataset
+```{r}
+library(Rmisc) 
+library(ggplot2)
+library(tidyverse)
+library(car)
+library(lme4)
+library(lmerTest)
+library(vegan)
+library(lubridate)
+library(nlme)
+library(glmm)
+library(dplyr)
+library(predictmeans)
+library(lsmeans)
+library(gridExtra)
+library(effects)
+library(emmeans)
+library(broom)
+library(modelr)
+library(performance)
+library(ggpubr)
+library(see)
+library(stats)
+
+```
+
+#Dataframe Transformation (wide --> long)
+```{r}
+aacids<-read.csv("Nestling Amino Acid Concentrations (11_07_23).csv")
+
+#remove the two very young (6&7 DO birds)
+aacids<-aacids%>%
+  filter(age>7)
+
+attach(aacids)
+#Need to transform dataset from wide to long (concentration needs to be a column)
+aacids4<-aacids%>%
+  gather(variable, value, - c(bird.id,treatment.type,habitat.type,site,age,date,year,nestid,mass,tarsus,wing.chord,pin,time.sampled,notes))
+
+```
+
+#PCA Creation
+```{r}
+#PCA for ALL amino acids
+groupedallAAs<-prcomp( ~lysine+methionine+arginine+histidine+valine+threonine+tryptophan+leucine+isoleucine+phenylalanine+proline+serine+glycine+alanine+tyrosine+taurine+carnosine+hydroxyproline+citrulline+cystathionine+glutamic.acid+sarcosine+X1.methylhistidine+ornithine+alpha.amino.n.butyric.acid+gamma.amino.butyric.acid+aspartic.acid, scale=TRUE, data =aacids)
+
+#To report PC1/PC2etc and generate loadings
+summary(groupedallAAs)
+groupedallAAs
+
+#Add the PCA scores back into the dataframe for EAAs
+aacids$eaapca=predict(groupedEAAs)
+
+#Add the PCA scores back into the dataframe for all AAs
+aacids$allaapca=predict(groupedallAAs)
+
+```
+
+#PC1 Models
+```{r}
+###PC1 models for all AAs##
+#Does nestling group predict PC1? No!
+apc1trt<-lm(allaapca[,"PC1"]~treatment.type+age, data=aacids)
+summary(apc1trt)
+
+#mass
+apc1m<-lm(mass~allaapca[,"PC1"], data=aacids)
+summary(apc1m)
+#tarsus
+apc1t<-lm(tarsus~allaapca[,"PC1"], data=aacids)
+summary(apc1t)
+#wing chord
+apc1w<-lm(wing.chord~allaapca[,"PC1"], data=aacids)
+summary(apc1w)
+#pin feather length
+apc1p<-lm(pin~allaapca[,"PC1"], data=aacids)
+summary(apc1p)
+
+```
+
+#(Table 2) Calculating averages for each analyte per nestling group
+```{r}
+#Use this to find the average values for each treatment group
+aggregate(lysine~treatment.type, data=aacids, mean)
+
+aggregate(arginine~treatment.type, data=aacids, mean)
+
+aggregate(methionine~treatment.type, data=aacids, mean)
+
+aggregate(isoleucine~treatment.type, data=aacids, mean)
+
+aggregate(alanine~treatment.type, data=aacids, mean)
+
+aggregate(glycine~treatment.type, data=aacids, mean)
+
+aggregate(tyrosine~treatment.type, data=aacids, mean)
+
+aggregate(carnosine~treatment.type, data=aacids, mean)
+
+aggregate(proline~treatment.type, data=aacids, mean)
+
+aggregate(hydroxyproline~treatment.type, data=aacids, mean)
+
+aggregate(serine~treatment.type, data=aacids, mean)
+
+aggregate(citrulline~treatment.type, data=aacids, mean)
+
+aggregate(cystathionine~treatment.type, data=aacids, mean)
+
+aggregate(glutamic.acid~treatment.type, data=aacids, mean)
+
+aggregate(sarcosine~treatment.type, data=aacids, mean)
+
+aggregate(threonine~treatment.type, data=aacids, mean)
+
+aggregate(valine~treatment.type, data=aacids, mean)
+
+aggregate(X1.methylhistidine~treatment.type, data=aacids, mean)
+
+aggregate(ornithine~treatment.type, data=aacids, mean)
+
+aggregate(alpha.amino.n.butyric.acid~treatment.type, data=aacids, mean)
+
+aggregate(histidine~treatment.type, data=aacids, mean)
+
+aggregate(gamma.amino.butyric.acid~treatment.type, data=aacids, mean)
+
+aggregate(taurine~treatment.type, data=aacids, mean)
+
+aggregate(leucine~treatment.type, data=aacids, mean)
+
+aggregate(tryptophan~treatment.type, data=aacids, mean)
+
+aggregate(phenylalanine~treatment.type, data=aacids, mean)
+
+aggregate(aspartic.acid~treatment.type, data=aacids, mean)
+
+```
+
+#Figures
+```{r}
+#############################
+#########Figure 2#############
+#############################
+allaasplot<-ggplot(aacids, 
+       aes(x = allaapca[,"PC1"], 
+           y = allaapca[,"PC2"], 
+           color = treatment.type)) +
+  geom_point(size=5, data=aacids) +
+  geom_point(size=5, shape=21, data=aacids,color="black")+
+  stat_ellipse(linewidth=1.25,type="t", level=0.95)+
+  theme_classic()+
+  theme(legend.position = "none")+
+  xlab("PC1 35.66%")+
+  ylab("PC2 13.80%")+
+  theme(legend.title=element_text(size=10), legend.text=element_text(size=9))+
+  scale_color_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"),name="Treatment Group", labels=c("Rural", "Urban","Urban Parasitized"))
+allaasplot
+
+#################################
+#########Fig A2##################
+################################
+aacids<-read.csv("Nestling Amino Acid Concentrations (11_07_23).csv")
+
+#remove the two very young (6&7 DO birds)
+aacids<-aacids%>%
+  filter(age>7)
+#remove GABBA, prior code chunks have it in
+eaacids<-aacids%>%
+  gather(variable, value, - c(bird.id,treatment.type,habitat.type,site,age,date,year,nestid,mass,tarsus,wing.chord,pin,notes,alanine,carnosine,hydroxyproline,alpha.amino.n.butyric.acid,gamma.amino.butyric.acid,citrulline,cystathionine,glutamic.acid,sarcosine,ornithine,X1.methylhistidine,tyrosine,aspartic.acid,time.sampled))
+
+#Re-create SE Whiskers
+EAASE<- eaacids %>%
+  group_by(variable, treatment.type) %>%
+  summarise(
+    n=n(),
+    mean=mean(value),
+    sd=sd(value)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+##Create the Barplot: EAAs + Tau w/ SE whiskers
+Fig2ASEc<-ggplot(EAASE, aes(x = variable, y = mean, fill=treatment.type))+
+geom_bar(stat = "summary", fun="mean", position="dodge")+
+geom_errorbar(aes(x=variable, ymin=mean-se, ymax=mean+se),position="dodge", width=0.9, linewidth=.8)+
+geom_point(data=eaacids, aes(x=variable, y=value, fill=treatment.type), color="black", size=2, shape=21, position = position_dodge(width = 0.9))+
+theme_classic()+
+ylim(0,150)+
+labs(y= "Average Concentraion (ppm)", x = "Amino Acid")+
+theme(axis.title.y = element_text(size=15))+
+theme(legend.title = element_text(size=12))+
+theme(legend.text = element_text(size=10))+
+theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=12))+
+theme(axis.text.y = element_text(size=10))+
+labs(fill = "Treatment Type")+
+theme(legend.position = "none")+
+theme(axis.title.x = element_blank())+
+scale_x_discrete(labels=c('Arginine','Glycine','Histidine','Isoleucine','Leucine','Lysine','Methionine','Phenylalanine','Proline','Serine','Taurine','Threonine','Tryptophan','Valine'))+
+scale_fill_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))+
+scale_color_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"), guide="none")
+Fig2ASEc
+
+########################
+########Fig A3#########
+#######################
+#Fig A
+pcplotpub<-ggplot(aacids, aes(x = treatment.type, y = allaapca[,"PC1"], fill = treatment.type))+
+geom_boxplot(outlier.shape = NA)+
+theme_classic()+
+labs(y= "PC1 Loadings of all Amino Acids", x = "Nestling Group")+
+geom_point(pch = 21, position = position_jitterdodge(jitter.width =0.2))+
+stat_summary(fun.y="mean", color="black",size=1.25, shape=3)+
+theme(legend.position = "none")+
+theme(axis.title.y = element_text(size=20))+
+theme(axis.title.x = element_text(size=20))+
+theme(axis.text.x = element_text(size=16))+
+theme(axis.text.y = element_text(size=16))+
+scale_x_discrete(labels=c('Rural', 'Urban non-parasitized', 'Urban parasitized'))+
+labs(fill = "Treatment Type")+
+#geom_hline(yintercept=0, linetype='dotted', col = 'black')
+scale_fill_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"), labels=c("Rural", "Urban","Urban parasitized"))
+pcplotpub
+
+```
+
