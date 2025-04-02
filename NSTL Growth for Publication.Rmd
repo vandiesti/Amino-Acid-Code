@@ -76,7 +76,7 @@ unique(nestling2$nestlingID)
 
 ```
 
-#Growth Models
+#Growth Models for Long Term Study
 ```{r}
 ##Mass with only nestlings <11##
 gmasstest11<-lmer(Mass~bhco.hab*Day+(1|NID)+(1|NID:nestlingID), data=sub11n)
@@ -106,6 +106,7 @@ sub11n<-dplyr::filter(nestling2, as.numeric(Day) < 11)
 
 #Figures
 ```{r}
+#Fig 1a
 a4<-ggplot(data=sub11n, aes(x=Day, y=Mass, color=bhco.hab))+
   geom_point(size=2)+
   theme_classic()+
@@ -118,7 +119,7 @@ a4<-ggplot(data=sub11n, aes(x=Day, y=Mass, color=bhco.hab))+
 a4
 
 ############################################
-
+#Fig1b
 b3<-ggplot(data=sub11n, aes(x=Day, y=Tarsus.Average, color=bhco.hab))+
  geom_point(size=2)+
   theme_classic()+
@@ -130,6 +131,7 @@ b3<-ggplot(data=sub11n, aes(x=Day, y=Tarsus.Average, color=bhco.hab))+
   scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
 b3
 
+#FigS1a
 c3<-ggplot(data=sub11n, aes(x=Day, y=Wingchord.average, color=bhco.hab))+
  geom_point(size=2)+
   theme_classic()+
@@ -141,6 +143,7 @@ c3<-ggplot(data=sub11n, aes(x=Day, y=Wingchord.average, color=bhco.hab))+
   scale_color_manual(values=c("urban.no"="gray40","rural.no"="chartreuse4","urban.yes"="chocolate4"), labels=c("Rural", "Urban","Urban Parasitized"))
 c3
 
+#FigS1b
 d3<-ggplot(data=sub11n, aes(x=Day, y=total.pin, color=bhco.hab))+
  geom_point(size=2)+
   theme_classic()+
