@@ -230,5 +230,42 @@ labs(fill = "Treatment Type")+
 scale_fill_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"), labels=c("Rural", "Urban","Urban parasitized"))
 pcplotpub
 
+########################
+########Fig A4#########
+#######################
+#PCA of only EAAs
+abc2<-ggplot(aacids, 
+       aes(x = eaapca[,"PC1"], 
+           y = eaapca[,"PC2"], 
+           color = treatment.type)) +
+  geom_point(size=5, data=aacids) +
+  geom_point(size=5, shape=21, data=aacids,color="black")+
+  stat_ellipse(linewidth=1,type="t", level=0.95)+
+  theme_classic()+
+  theme(legend.position = "none")+
+  xlab("PC1 55.53%")+
+  ylab("PC2 11.23%")+
+  theme(legend.title=element_text(size=10), legend.text=element_text(size=9))+
+  scale_color_manual(values=c("U"="gray40","R"="chartreuse4","UC"="chocolate4"),name="Treatment Group", labels=c("Rural", "Urban","Urban Parasitized"))
+abc2
 ```
 
+#Growth Models for AA NSTL (Supplementary Table 1)
+```{r}
+##MASS##
+aanstlmass<-lmer(mass~treatment.type*age+(1|nestid), data=aacids)
+summary(aanstlmass)
+
+##TARSUS##
+aanstltars<-lmer(tarsus~treatment.type*age+(1|nestid), data=aacids)
+summary(aanstltars)
+
+##WC##
+aanstlwc<-lmer(wing.chord~treatment.type*age+(1|nestid), data=aacids)
+summary(aanstlwc)
+
+##PIN## (singularity issues)
+aanstlpin<-lmer(pin~treatment.type*age+(1|nestid), data=aacids)
+summary(aanstlpin)
+
+```
